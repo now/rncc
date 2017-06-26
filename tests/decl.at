@@ -1,0 +1,3 @@
+AT_RNCC_CHECK_TRANSFORM([A single namespace declaration],
+[namespace n = "n"],
+[<grammar xmlns="http://relaxng.org/ns/structure/1.0"/>])

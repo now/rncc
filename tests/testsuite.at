@@ -1,0 +1,5 @@
+AT_INIT
+
+AT_TESTED([rncc])
+
+m4_include([decl.at])

@@ -1,0 +1,7 @@
+#! @SHELL@
+# Wrapper around a non-installed rncc to make it work as an installed one.
+
+# Use the shipped files, not those installed.
+RNCC_PKGDATADIR='@abs_top_srcdir@/data'
+export RNCC_PKGDATADIR
+exec $PRERNCC '@abs_top_builddir@/src/rncc' ${1+"$@"}
