@@ -473,6 +473,12 @@ content_concat(struct content left, struct content right)
 static void element_free(struct element *element);
 static void text_free(struct text *text);
 
+static struct content
+content_empty(void)
+{
+        return (struct content){ NULL, NULL };
+}
+
 static void
 content_free(struct content content)
 {
@@ -527,6 +533,7 @@ element_free(struct element *element)
         name_free(element->name);
         attributes_free(element->attributes);
         content_free(element->children);
+        free(element);
 }
 
 static struct elements
@@ -603,58 +610,6 @@ attributes_and_elements_to_xml(struct attributes attributes,
                                struct elements elements)
 {
         return (struct xml){ attributes, elements_to_content(elements) };
-}
-
-static struct element *
-rng_element_with_attribute(struct string element_name,
-                           struct string attribute_name, struct string value,
-                           struct attributes attributes,
-                           struct elements elements)
-{
-        struct attribute *a = attribute(NAME(STRING(""), attribute_name), value);
-        if (a == NULL)
-                return NULL;
-        struct element *e = rng_element(element_name,
-                                        attributes_and_elements_to_xml(
-                                                attributes_cons(a, attributes),
-                                                elements));
-        if (e == NULL)
-                free(a);
-        return e;
-}
-
-static struct element *
-rng_element_with_element(struct string parent_name,
-                         struct attributes attributes,
-                         struct elements parent_elements,
-                         struct string child_name,
-                         struct elements child_elements)
-{
-        struct element *c = rng_element(child_name,
-                                        elements_to_xml(child_elements));
-        if (c == NULL)
-                return NULL;
-        struct element *p = rng_element(parent_name,
-                                        attributes_and_elements_to_xml(
-                                                attributes,
-                                                elements_append(parent_elements,
-                                                                c)));
-        if (p == NULL)
-                free(c);
-        return p;
-}
-
-static struct element *
-rng_element_with_text(struct string name, struct attributes attributes,
-                      struct string string)
-{
-        struct content c = text(string);
-        if (c.first == NULL)
-                return NULL;
-        struct element *e = rng_element(name, (struct xml){ attributes, c});
-        if (e == NULL)
-                content_free(c);
-        return e;
 }
 
 static struct xml
@@ -773,13 +728,13 @@ map_schema_ref(UNUSED struct environment *environment, struct string uri)
         return uri;
 }
 
-// TODO This needs to be checked for NULL from attribute().
-static struct attributes
-make_ns_attribute(struct string uri)
+static bool
+make_ns_attribute(struct attributes *attributes, struct string uri)
 {
-        return string_is_inherit(uri) ?
-                empty().attributes :
-                attribute_to_attributes(attribute(LNAME("name"), uri));
+        if (string_is_inherit(uri))
+                return *attributes = empty().attributes, true;
+        *attributes = attribute_to_attributes(attribute(LNAME("name"), uri));
+        return attributes->first != NULL;
 }
 
 static struct element *
@@ -837,7 +792,99 @@ datatype_attributes(struct string library, struct string type)
         return (struct attributes){ l, t };
 }
 
-static bool is_elem;
+static struct element *
+rng_element_with_attribute(struct string element_name,
+                           struct string attribute_name, struct string value,
+                           struct attributes attributes,
+                           struct content content)
+{
+        struct attribute *a = attribute(NAME(STRING(""), attribute_name), value);
+        if (a == NULL)
+                return NULL;
+        struct element *e = rng_element(element_name, (struct xml) {
+                                                attributes_cons(a, attributes),
+                                                content });
+        if (e == NULL)
+                free(a);
+        return e;
+}
+
+static struct element *
+rng_element_with_element(struct string parent_name,
+                         struct attributes attributes,
+                         struct elements parent_elements,
+                         struct string child_name,
+                         struct elements child_elements)
+{
+        struct element *c = rng_element(child_name,
+                                        elements_to_xml(child_elements));
+        if (c == NULL)
+                return NULL;
+        struct element *p = rng_element(parent_name,
+                                        attributes_and_elements_to_xml(
+                                                attributes,
+                                                elements_append(parent_elements,
+                                                                c)));
+        if (p == NULL)
+                free(c);
+        return p;
+}
+
+static struct element *
+rng_element_with_text(struct string name, struct attributes attributes,
+                      struct string string)
+{
+        struct content c = text(string);
+        if (c.first == NULL)
+                return NULL;
+        struct element *e = rng_element(name, (struct xml){ attributes, c});
+        if (e == NULL)
+                content_free(c);
+        return e;
+}
+
+static struct element *
+ns_name_element(struct environment *environment, struct string prefix,
+                struct elements elements)
+{
+        struct attributes ns;
+        struct element *e = NULL;
+        if (make_ns_attribute(&ns, lookup_prefix(environment, prefix)) &&
+            (e = rng_element(STRING("nsName"),
+                             attributes_and_elements_to_xml(ns,
+                                                            elements))) == NULL)
+                attributes_free(ns);
+        return e;
+}
+
+static struct element *
+ns_name_except_element(struct environment *environment, struct string prefix,
+                       struct elements elements)
+{
+        struct element *ex, *e = NULL;
+        if ((ex = rng_element(STRING("except"),
+                              elements_to_xml(elements))) != NULL &&
+            (e = ns_name_element(environment, prefix,
+                                 element_to_elements(ex))) == NULL)
+                free(ex);
+        return e;
+}
+
+static struct element *
+name_element(struct string uri, struct string name)
+{
+        struct attributes ns;
+        struct content c = content_empty();
+        struct element *e = NULL;
+        if (make_ns_attribute(&ns, uri) &&
+            ((c = text(name)).first == NULL ||
+             (e = rng_element(STRING("name"), (struct xml){
+                             ns, c })) == NULL)) {
+                content_free(c);
+                attributes_free(ns);
+        }
+        return e;
+}
 
 static int yylex(YYSTYPE *value, YYLTYPE *location, struct parser *parser);
 
@@ -892,12 +939,13 @@ yyerror(YYLTYPE *location, struct parser *parser, const char *message)
 %type <attribute> annotation_attribute nested_annotation_attribute
 %type <attributes> assign_op opt_inherit datatype_name annotation_attributes
 %type <attributes> nested_annotation_attributes
-%type <content> annotation_content documentation
+%type <content> param_value annotation_content documentation
 %type <element> top_level_body member annotated_component component
 %type <element> start define include include_member annotated_include_component
 %type <element> include_component div include_div repeated_primary
-%type <element> lead_annotated_data_except primary data_except param
-%type <element> lead_annotated_except_name_class except_name_class
+%type <element> lead_annotated_data_except primary data_except annotated_param
+%type <element> param except_element_name_class except_attribute_name_class
+%type <element> simple_element_name_class simple_attribute_name_class
 %type <element> simple_name_class annotation_element
 %type <element> annotation_element_not_keyword nested_annotation_element
 %type <elements> grammar opt_include_body include_body pattern top_level_pattern
@@ -906,9 +954,12 @@ yyerror(YYLTYPE *location, struct parser *parser, const char *message)
 %type <elements> top_level_inner_particle annotated_primary
 %type <elements> top_level_annotated_primary annotated_data_except
 %type <elements> top_level_annotated_data_except lead_annotated_primary
-%type <elements> opt_params params name_class inner_name_class name_class_choice
-%type <elements> annotated_except_name_class annotated_simple_name_class
-%type <elements> lead_annotated_simple_name_class follow_annotations
+%type <elements> opt_params params element_name_class attribute_name_class
+%type <elements> element_name_class_choice attribute_name_class_choice
+%type <elements> annotated_simple_element_name_class
+%type <elements> annotated_simple_attribute_name_class
+%type <elements> lead_annotated_simple_element_name_class
+%type <elements> lead_annotated_simple_attribute_name_class follow_annotations
 %type <elements> annotation_elements documentations
 %type <keyword> keyword
 %type <name> foreign_attribute_name foreign_element_name
@@ -925,7 +976,8 @@ yyerror(YYLTYPE *location, struct parser *parser, const char *message)
 
 %code
 {
-#define M(p) do { if ((p) == NULL) { parser_oom(parser); YYABORT; } } while (0)
+#define B(p) do { if (!(p)) { parser_oom(parser); YYABORT; } } while (0)
+#define M(p) B((p) != NULL)
 #define L(p) M((p).last)
 #define S(p) M((p).s)
 
@@ -994,7 +1046,7 @@ start:
 define:
   identifier assign_op pattern
     { M($$ = rng_element_with_attribute(STRING("define"), STRING("name"), $1, $2,
-                                        $3)); }
+                                        elements_to_content($3))); }
 
 assign_op:
   '='
@@ -1010,15 +1062,15 @@ include:
   "include" any_uri_literal opt_inherit opt_include_body
     { M($$ = rng_element_with_attribute($1, STRING("href"),
                                         map_schema_ref(&parser->environment, $2),
-                                        $3, $4)); };
+                                        $3, elements_to_content($4))); };
 
 any_uri_literal: literal { /* TODO Verify anyURI */ $$ = $1; };
 
 opt_inherit:
   %empty
-    { $$ = make_ns_attribute(lookup_default(&parser->environment)); }
+    { B(make_ns_attribute(&$$, lookup_default(&parser->environment))); }
 | "inherit" '=' identifier_or_keyword
-    { $$ = make_ns_attribute(lookup_prefix(&parser->environment, $3)); };
+    { B(make_ns_attribute(&$$, lookup_prefix(&parser->environment, $3))); };
 
 opt_include_body:
   %empty { $$ = elements_empty(); }
@@ -1121,15 +1173,10 @@ lead_annotated_primary:
                       apply_annotations_group($1, $3)); };
 
 primary:
-// TODO Add ns attribute here instead, to all name elements.  We need
-// to iterate through name_class and check for any name elements and
-// any choice/name elements and update them.  Another alternative
-// would be to have element_name_class and attribute_name_class, but
-// that’d add 73 lines of near duplication.
-  "element" { is_elem = true; } name_class '{' pattern '}'
-    { M($$ = rng_element($1, elements_to_xml(elements_concat($3, $5)))); }
-| "attribute" { is_elem = false; } name_class '{' pattern '}'
-    { M($$ = rng_element($1, elements_to_xml(elements_concat($3, $5)))); }
+  "element" element_name_class '{' pattern '}'
+    { M($$ = rng_element($1, elements_to_xml(elements_concat($2, $4)))); }
+| "attribute" attribute_name_class '{' pattern '}'
+    { M($$ = rng_element($1, elements_to_xml(elements_concat($2, $4)))); }
 | "mixed" '{' pattern '}'
     { M($$ = rng_element($1, elements_to_xml($3))); }
 | "list" '{' pattern '}'
@@ -1149,16 +1196,16 @@ primary:
     { M($$ = rng_element($1, empty())); }
 | ref
     { M($$ = rng_element_with_attribute(STRING("ref"), STRING("name"), $1,
-                                        empty().attributes, elements_empty())); }
+                                        empty().attributes, content_empty())); }
 | "parent" ref
     { M($$ = rng_element_with_attribute(STRING("parentRef"), STRING("name"), $2,
-                                        empty().attributes, elements_empty())); }
+                                        empty().attributes, content_empty())); }
 | "grammar" '{' grammar '}'
     { M($$ = rng_element($1, elements_to_xml($3))); }
 | "external" any_uri_literal opt_inherit
     { M($$ = rng_element_with_attribute(STRING("externalRef"), STRING("href"),
                                         map_schema_ref(&parser->environment, $2),
-                                        $3, elements_empty())); };
+                                        $3, content_empty())); };
 
 data_except:
   datatype_name opt_params '-' lead_annotated_primary
@@ -1185,94 +1232,102 @@ opt_params:
 
 params:
   %empty { $$ = elements_empty(); }
-| params param { $$ = elements_append($1, $2); };
+| params annotated_param { $$ = elements_append($1, $2); };
+
+annotated_param: annotations param { $$ = apply_annotations($1, $2); };
 
 param:
-  annotations identifier_or_keyword '=' literal
-  // TODO M()
-  // Could allow apply_annotations to return NULL on NULL input as
-  // element.  We still need to check attribute() and text() here.
-    { $$ = apply_annotations(
-                    $1,
-                    rng_element(STRING("param"), (struct xml){
-                                    attribute_to_attributes(
-                                            attribute(LNAME("name"), $2)),
-                                    text($4) })); };
+  identifier_or_keyword '=' param_value
+    { M($$ = rng_element_with_attribute(STRING("param"),
+                                        STRING("name"), $1,
+                                        empty().attributes, $3)); };
 
-name_class: inner_name_class;
+param_value: literal { L($$ = text($1)); };
 
-inner_name_class:
-  annotated_simple_name_class
-| name_class_choice
+element_name_class:
+  annotated_simple_element_name_class
+| element_name_class_choice
     { L($$ = element_to_elements(rng_element(STRING("choice"),
                                              elements_to_xml($1)))); }
-| annotated_except_name_class;
+| annotations except_element_name_class follow_annotations
+    { $$ = elements_cons(apply_annotations($1, $2), $3); };
 
-name_class_choice:
-  annotated_simple_name_class '|' annotated_simple_name_class
+attribute_name_class:
+  annotated_simple_attribute_name_class
+| attribute_name_class_choice
+    { L($$ = element_to_elements(rng_element(STRING("choice"),
+                                             elements_to_xml($1)))); }
+| annotations except_attribute_name_class follow_annotations
+    { $$ = elements_cons(apply_annotations($1, $2), $3); };
+
+element_name_class_choice:
+  annotated_simple_element_name_class '|' annotated_simple_element_name_class
     { $$ = elements_concat($1, $3); }
-| name_class_choice '|' annotated_simple_name_class
+| element_name_class_choice '|' annotated_simple_element_name_class
     { $$ = elements_concat($1, $3); };
 
-annotated_except_name_class:
-  lead_annotated_except_name_class follow_annotations
-    { $$ = elements_cons($1, $2); };
+attribute_name_class_choice:
+  annotated_simple_attribute_name_class '|' annotated_simple_attribute_name_class
+    { $$ = elements_concat($1, $3); }
+| attribute_name_class_choice '|' annotated_simple_attribute_name_class
+    { $$ = elements_concat($1, $3); };
 
-lead_annotated_except_name_class:
-  annotations except_name_class { $$ = apply_annotations($1, $2); };
-
-annotated_simple_name_class:
-  lead_annotated_simple_name_class follow_annotations
+annotated_simple_element_name_class:
+  lead_annotated_simple_element_name_class follow_annotations
     { $$ = elements_concat($1, $2); };
 
-lead_annotated_simple_name_class:
-  annotations simple_name_class
+annotated_simple_attribute_name_class:
+  lead_annotated_simple_attribute_name_class follow_annotations
+    { $$ = elements_concat($1, $2); };
+
+lead_annotated_simple_element_name_class:
+  annotations simple_element_name_class
     { $$ = element_to_elements(apply_annotations($1, $2)); }
-| annotations '(' inner_name_class ')'
+| annotations '(' element_name_class ')'
     { L($$ = name_cmp($3.first->name, NAME(uri_rng, STRING("choice"))) == 0 ?
                       element_to_elements(apply_annotations($1, $3.first)) :
                       apply_annotations_choice($1, $3)); };
 
-except_name_class:
-  NS_NAME '-' lead_annotated_simple_name_class
-  // TODO M()
-    { $$ = rng_element(
-                    STRING("nsName"),
-                    attributes_and_elements_to_xml(
-                            make_ns_attribute(lookup_prefix(&parser->environment,
-                                                            $1)),
-                            element_to_elements(
-                                    rng_element(STRING("except"),
-                                                elements_to_xml($3))))); }
-| '*' '-' lead_annotated_simple_name_class
+lead_annotated_simple_attribute_name_class:
+  annotations simple_attribute_name_class
+    { $$ = element_to_elements(apply_annotations($1, $2)); }
+| annotations '(' attribute_name_class ')'
+    { L($$ = name_cmp($3.first->name, NAME(uri_rng, STRING("choice"))) == 0 ?
+                      element_to_elements(apply_annotations($1, $3.first)) :
+                      apply_annotations_choice($1, $3)); };
+
+except_element_name_class:
+  NS_NAME '-' lead_annotated_simple_element_name_class
+  { $$ = ns_name_except_element(&parser->environment, $1, $3); }
+| '*' '-' lead_annotated_simple_element_name_class
     { M($$ = rng_element_with_element(STRING("anyName"), empty().attributes,
                                       elements_empty(), STRING("except"),
                                       $3)); };
 
-simple_name_class:
+except_attribute_name_class:
+  NS_NAME '-' lead_annotated_simple_attribute_name_class
+    { M($$ = ns_name_except_element(&parser->environment, $1, $3)); }
+| '*' '-' lead_annotated_simple_attribute_name_class
+    { M($$ = rng_element_with_element(STRING("anyName"), empty().attributes,
+                                      elements_empty(), STRING("except"),
+                                      $3)); };
+
+simple_element_name_class:
   identifier_or_keyword
-  // TODO M()
-    { $$ = rng_element(STRING("name"), (struct xml){
-                            make_ns_attribute(
-                                    // TODO Just post-process instead.
-                                    is_elem ?
-                                    lookup_default(&parser->environment) :
-                                    STRING("")),
-                            text($1) }); }
-| c_name
-  // TODO M()
+    { M($$ = name_element(lookup_default(&parser->environment), $1)); }
+| simple_name_class;
+
+simple_attribute_name_class:
+  identifier_or_keyword { M($$ = name_element(STRING(""), $1)); }
+| simple_name_class;
+
+simple_name_class:
+  c_name
     { mark_prefix_used(&parser->environment, $1.prefix);
-      $$ = rng_element(STRING("name"), (struct xml){
-                            make_ns_attribute(lookup_prefix(&parser->environment,
-                                                            $1.prefix)),
-                            text($1.local) }); }
+            M($$ = name_element(lookup_prefix(&parser->environment, $1.prefix),
+                                $1.local)); }
 | NS_NAME
-  // TODO M()
-    { $$ = rng_element(
-                    STRING("nsName"),
-                    attributes_to_xml(
-                            make_ns_attribute(lookup_prefix(&parser->environment,
-                                                            $1)))); }
+    { M($$ = ns_name_element(&parser->environment, $1, elements_empty())); }
 | '*'
     { M($$ = rng_element(STRING("anyName"), empty())); };
 
