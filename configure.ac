@@ -8,10 +8,12 @@ AC_CONFIG_SRCDIR([src/rncc.y])
 AC_CONFIG_TESTDIR([tests], [tests])
 AM_INIT_AUTOMAKE([1.15 foreign silent-rules subdir-objects -Wall -Werror])
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
+AM_PROG_AR
 AC_PROG_AWK
 AC_PROG_CC_C99
 AM_PROG_CC_C_O
 AC_PROG_CPP_WERROR
+AC_PROG_RANLIB
 AC_PROG_YACC
 
 AC_ARG_ENABLE([gcc-warnings],
@@ -28,7 +30,7 @@ if test "${enableval}" = yes; then
   gl_WARN_ADD([-Wassign-enum])
   gl_WARN_ADD([-Wcast-align])
   gl_WARN_ADD([-Wcast-qual])
-  gl_WARN_ADD([-Wconversion])
+  gl_WARN_ADD([-Wconversion], [WCONVERSION_CFLAGS])
   gl_WARN_ADD([-Wextra])
   gl_WARN_ADD([-Wfor-loop-analysis])
   gl_WARN_ADD([-Wformat-pedantic])
@@ -58,6 +60,10 @@ if test "${enableval}" = yes; then
   gl_WARN_ADD([-Wundef])
   gl_WARN_ADD([-Wuninitialized])
   gl_WARN_ADD([-Wwrite-strings])
+  if test -n "$WCONVERSION_CFLAGS"; then
+    AC_DEFINE([HAVE_WCONVERSION], [1],
+              [Define to 1 if compiler supports -Wconversion.])
+  fi
   if test -n "$WSUGGESTATTRIBUTEPURE_CFLAGS"; then
     AC_DEFINE([HAVE_WSUGGESTATTRIBUTE_PURE], [1],
               [Define to 1 if compiler supports -Wsuggestattribute=pure.])

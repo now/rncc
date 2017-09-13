@@ -5,7 +5,13 @@ $(top_srcdir)/.version: configure
 dist-hook:
 	$(AM_V_GEN)echo $(VERSION) > $(distdir)/.tarball-version
 
-AM_CFLAGS = $(WARN_CFLAGS) $(WERROR_CFLAGS)
+AM_CPPFLAGS = \
+	-I$(srcdir)/include
+AM_CFLAGS = \
+	$(WARN_CFLAGS) \
+	$(WERROR_CFLAGS) \
+	$(WCONVERSION_CFLAGS) \
+	$(WSUGGESTATTRIBUTEPURE_CFLAGS)
 
 AM_YFLAGS = --warnings=all,error --report=all
 
@@ -35,10 +41,58 @@ distclean-local: clean-gtags
 
 bin_PROGRAMS = src/rncc
 
-src_rncc_SOURCES = \
-	src/rncc.y
+lib_LIBRARIES = \
+	lib/libio.a \
+	lib/librncc.a
 
-check_SCRIPTS = tests/rncc
+lib_libio_a_SOURCES = \
+	lib/_io_assert_print.c \
+	lib/io_buffered_in_init.c \
+	lib/io_buffered_out_init.c \
+	lib/io_dynamic_out_init.c \
+	lib/io_fd_in_init.c \
+	lib/io_fd_out_init.c \
+	lib/io_feed.c \
+	lib/io_in_close.c \
+	lib/io_out_close.c \
+	lib/io_print.c \
+	lib/io_printv.c \
+	lib/io_read.c \
+	lib/io_read_once.c \
+	lib/io_static_out_init.c \
+	lib/io_std.c \
+	lib/io_stynamic_out_init.c \
+	lib/io_write.c \
+	lib/io_write_z.c
+
+lib_librncc_a_SOURCES = \
+	lib/error.c \
+	lib/format.c \
+	lib/location.c \
+	lib/rncc.y \
+	lib/uri.c
+
+src_rncc_LDADD = lib/libio.a lib/librncc.a
+
+check_PROGRAMS = \
+	tests/lib/uri \
+	tests/src/rncc
+
+check_SCRIPTS = \
+	tests/rncc
+
+LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) $(srcdir)/build/tap-driver.sh
+TEST_LOG_DRIVER = $(LOG_DRIVER)
+TESTS = $(check_PROGRAMS)
+
+tests_lib_uri_SOURCES = \
+	lib/error.c \
+	lib/format.c \
+	lib/location.c \
+	lib/uri.c \
+	tests/lib/uri.c
+
+tests_lib_uri_LDADD = lib/libio.a
 
 tests/rncc: tests/rncc.in
 	$(AM_V_GEN)sed \
@@ -48,9 +102,9 @@ tests/rncc: tests/rncc.in
 	$(AM_V_at)chmod a+x $@.tmp
 	$(AM_V_at)mv $@.tmp $@
 
-TESTSUITE_AT = \
-	tests/decl.at \
-	tests/local.at
+tests_src_rncc_LDADD = lib/libio.a lib/librncc.a
+
+TESTSUITE_AT =
 
 TESTSUITE = tests/testsuite
 
@@ -82,19 +136,19 @@ $(TESTSUITE): tests/testsuite.at tests/package.m4 $(TESTSUITE_AT)
 	$(AM_V_GEN)$(AUTOTEST) $(AUTOTESTFLAGS) -o $@.tmp $<
 	$(AM_V_at)mv $@.tmp $@
 
-check-local: tests/atconfig tests/atlocal $(TESTSUITE)
-	@echo '$(TESTSUITE): Entering directory `tests'\'
-	$(RUN_TESTSUITE)
-	@echo '$(TESTSUITE): Leaving directory `tests'\'
+# check-local: tests/atconfig tests/atlocal $(TESTSUITE)
+# 	@echo '$(TESTSUITE): Entering directory `tests'\'
+# 	$(RUN_TESTSUITE)
+# 	@echo '$(TESTSUITE): Leaving directory `tests'\'
 
-installcheck-local: tests/atconfig tests/atlocal $(TESTSUITE)
-	@echo '$(TESTSUITE): Entering directory `tests'\'
-	$(RUN_TESTSUITE) AUTOTEST_PATH='$(bindir)'
-	@echo '$(TESTSUITE): Leaving directory `tests'\'
+# installcheck-local: tests/atconfig tests/atlocal $(TESTSUITE)
+# 	@echo '$(TESTSUITE): Entering directory `tests'\'
+# 	$(RUN_TESTSUITE) AUTOTEST_PATH='$(bindir)'
+# 	@echo '$(TESTSUITE): Leaving directory `tests'\'
 
-clean-local:
-	if test -f '$(TESTSUITE)'; then \
-	  echo '$(TESTSUITE): Entering directory `tests'\'; \
-	  $(SHELL) $(TESTSUITE) -C tests --clean; \
-	  echo '$(TESTSUITE): Leaving directory `tests'\'; \
-	fi
+# clean-local:
+# 	if test -f '$(TESTSUITE)'; then \
+# 	  echo '$(TESTSUITE): Entering directory `tests'\'; \
+# 	  $(SHELL) $(TESTSUITE) -C tests --clean; \
+# 	  echo '$(TESTSUITE): Leaving directory `tests'\'; \
+# 	fi

@@ -1,5 +1,25 @@
 m4_version_prereq([2.59])
 
+# AT_RNCC_DATA(FILE, CONTENTS)
+# -----------------------
+# Initialize an input data FILE with given CONTENTS, which should be
+# empty or end with a newline.
+# This macro is not robust to active symbols in CONTENTS *on purpose*.
+# If you don't want CONTENTS to be evaluated, quote it twice.
+_AT_DEFINE_SETUP([AT_RNCC_DATA],
+[m4_if([$2], [], [: >$1],
+       [$2], [[]], [: >$1],
+       [m4_bmatch([$2], [
+],
+[cat >$1 <<'_ATEOF'
+$2[]m4_if(m4_substr([$2], m4_decr(m4_len([$2]))), [
+], [],
+[
+])_ATEOF
+],
+[AS_ECHO_N(["AS_ESCAPE([$2])"]) >$1
+])])])
+
 m4_define([AT_RNCC_CHECK],
 [AT_CHECK([rncc < $1], [0],
 [<?xml version="1.0" encoding="UTF-8"?>
@@ -8,9 +28,8 @@ $2
 
 m4_define([AT_RNCC_CHECK_TRANSFORM],
 [AT_SETUP([$1])
-AT_DATA(m4_default([$4], [input.rnc]), [$2
-])
-AT_RNCC_CHECK(m4_default($4, [input.rnc]),
+AT_RNCC_DATA(m4_default([$4], [input.rnc]), [$2])
+AT_RNCC_CHECK(m4_default([$4], [input.rnc]),
 [$3])
 AT_CLEANUP])
 
@@ -18,11 +37,21 @@ m4_define([AT_RNCC_CHECK_FAIL],
 [AT_CHECK([rncc < $1], [1], [], [$2
 ])])
 
-
 m4_define([AT_RNCC_CHECK_FAIL_TRANSFORM],
 [AT_SETUP([$1])
-AT_DATA(m4_default([$4], [input.rnc]), [$2
-])
-AT_RNCC_CHECK_FAIL(m4_default($4, [input.rnc]),
+AT_RNCC_DATA(m4_default([$4], [input.rnc]), [$2])
+AT_RNCC_CHECK_FAIL(m4_default([$4], [input.rnc]),
 [$3])
 AT_CLEANUP])
+
+m4_define([AT_RNCC_CHECK_ELEMENT],
+[AT_RNCC_CHECK_TRANSFORM([$1],
+[$2],
+[<element xmlns="http://relaxng.org/ns/structure/1.0">
+ $3
+</element>])])
+
+m4_define([AT_RNCC_CHECK_LITERAL],
+[AT_RNCC_CHECK_TRANSFORM([$1],
+[$2],
+[<value xmlns="http://relaxng.org/ns/structure/1.0">$3</value>])])
