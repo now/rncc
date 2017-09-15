@@ -632,6 +632,13 @@ static struct test {
           "1.1-2: error: UTF-16 input isn’t supported"),
         E("UTF-16BE input", "\xff\xfe",
           "1.1-2: error: UTF-16 input isn’t supported"),
+        // Issues
+        G("Don’t use “rng” prefix in output",
+          "default namespace rng = 'http://relaxng.org/ns/structure/1.0'\n"
+          "start = empty",
+          "  <start>\n"
+          "    <empty/>\n"
+          "  </start>\n"),
 #undef STRING
 #undef E
 #undef X

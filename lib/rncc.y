@@ -2499,16 +2499,15 @@ static int
 outname(struct xml_closure *closure, struct name name)
 {
         struct namespace_mapping *p = NULL;
-        if (name.uri.n > 0) {
-                for (p = closure->environment->ns; p != NULL; p = p->next)
-                        if (string_cmp(p->uri, name.uri) == 0)
-                                break;
-                if (p == NULL)
-                        assert(string_cmp(name.uri,
-                                          closure->environment->d.uri) == 0 ||
+        if (name.uri.n > 0)
+                if (string_cmp(name.uri, uri_rng) != 0) {
+                        for (p = closure->environment->ns; p != NULL; p=p->next)
+                                if (string_cmp(p->uri, name.uri) == 0)
+                                        break;
+                        assert(p != NULL ||
                                string_cmp(name.uri,
-                                          uri_rng) == 0);
-        }
+                                          closure->environment->d.uri) == 0);
+                }
         int r;
         if (p != NULL && p->prefix.n > 0 &&
             ((r = io_write(closure->out, p->prefix.s, p->prefix.n)) < 0 ||
