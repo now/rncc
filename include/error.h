@@ -1,6 +1,7 @@
 // TODO Just use a buffer here, don’t require a malloc.  What would be
 // an appropriate size?  What’s the maximum length of a reasonable
-// error message?
+// error message?  Actually, a middle-road here is to provide a malloc
+// that’s based on a static buffer.
 struct error {
         struct location location;
         enum error_level {

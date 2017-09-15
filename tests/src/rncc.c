@@ -61,6 +61,13 @@ static struct test {
           "1:1: error: illegal UTF-8 byte sequence; skipping"),
         L("Escape sequence", "'\\x{61}'", "a"),
         L("Escape sequence with multiple xes", "'\\xxx{61}'", "a"),
+        // Comments
+        X("Comment (1)", "# This is a comment",
+          "<grammar xmlns=\"http://relaxng.org/ns/structure/1.0\"/>"),
+        // Comments
+        L("Comment (2)",
+          "# This is a comment\n"
+          "''", ""),
         // Literals
         L("Empty literal", "''", ""),
         L("Empty literal using escaped quotes", "\\x{27}\\x{27}", ""),

@@ -1503,7 +1503,16 @@ again:
         while (parser->p < parser->end)
                 if (!yylex_decode(&c, &escape, &t, &l, parser))
                         return END;
-                else if (c > ' ')
+                else if (c == '#') {
+                        parser_goto(parser, t, &l);
+                        while (parser->p < parser->end) {
+                                if (!yylex_decode(&c, &escape, &t, &l, parser))
+                                        return END;
+                                parser_goto(parser, t, &l);
+                                if (c == '\0' || c == '\x0a')
+                                        break;
+                        }
+                } else if (c > ' ')
                         break;
                 else
                         parser_goto(parser, t, &l);
