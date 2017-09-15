@@ -538,6 +538,7 @@ literals_concat(struct literals left, struct literals right)
         return (struct literals){ left.first, right.last };
 }
 
+// TODO Should we be freeing strings inside ls?
 static struct string
 literals_to_string(const struct parser *parser, struct literals ls)
 {
@@ -1051,6 +1052,8 @@ bind_datatype_prefix(struct parser *parser, YYLTYPE location,
                 parser_oom(parser, ls_location);
                 return false;
         }
+        // TODO We need to free stuff in namespace mappings later on.
+        uri.shared = true;
         if (string_cmp(prefix, prefix_xsd) == 0 &&
             string_cmp(uri, uri_xsd) != 0) {
                 parser_error_s(parser, ls_location, "prefix “xsd” can only be "
@@ -2755,6 +2758,7 @@ rncc_parse(struct io_out *out, struct errors *errors, const char *s, size_t n)
                 .free = free,
         };
         int r;
+        struct literal uri_xsd_literal = { NULL, uri_xsd, { {0, 0}, {0, 0} } };
         if (parser.p + 1 < parser.end &&
             (((unsigned char)parser.p[0] == 0xff &&
               (unsigned char)parser.p[1] == 0xfe) ||
@@ -2771,12 +2775,8 @@ rncc_parse(struct io_out *out, struct errors *errors, const char *s, size_t n)
                                         (struct location){ {0, 0}, {0, 0} },
                                         prefix_xsd,
                                         (struct literals){
-                                                &(struct literal){
-                                                        NULL,
-                                                        uri_xsd,
-                                                        { {0, 0} , {0, 0} }
-                                                },
-                                                NULL
+                                                &uri_xsd_literal,
+                                                &uri_xsd_literal
                                         },
                                         &(struct location){ {0, 0}, {0, 0} }) &&
                    yyparse(&parser) == 0 && parser.errors->n == 0) {

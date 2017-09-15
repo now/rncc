@@ -639,6 +639,22 @@ static struct test {
           "  <start>\n"
           "    <empty/>\n"
           "  </start>\n"),
+        // This was caused by literals_to_string result being used in
+        // namespace mapping and the result wasn’t marked as shared.
+        G("Avoid double free when freeing attribute values",
+          "a = attribute b { xsd:anyURI } c = attribute d { xsd:anyURI }",
+          "  <define name=\"a\">\n"
+          "    <attribute>\n"
+          "      <name ns=\"\">b</name>\n"
+          "      <data datatypeLibrary=\"http://www.w3.org/2001/XMLSchema-datatypes\" type=\"anyURI\"/>\n"
+          "    </attribute>\n"
+          "  </define>\n"
+          "  <define name=\"c\">\n"
+          "    <attribute>\n"
+          "      <name ns=\"\">d</name>\n"
+          "      <data datatypeLibrary=\"http://www.w3.org/2001/XMLSchema-datatypes\" type=\"anyURI\"/>\n"
+          "    </attribute>\n"
+          "  </define>\n"),
 #undef STRING
 #undef E
 #undef X
