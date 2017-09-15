@@ -2564,7 +2564,7 @@ static const struct entity text_entities[] = {
 };
 
 static const struct entity attribute_entities[] = {
-        E("\n"),N,N,N,N,N,N,N,N,E("&#9;"),E("&#10;"),N,N,E("&#13;"),N,N,
+        E("\n"),N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,
         N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,
         N,N,E("&quot;"),N,N,N,E("&amp;"),N,N,N,N,N,N,N,N,N,
         N,N,N,N,N,N,N,N,N,N,N,N,E("&lt;"),N,E("&gt;")
