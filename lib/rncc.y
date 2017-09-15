@@ -934,9 +934,6 @@ _bind_prefix(struct parser *parser, const YYLTYPE *location,
                                              (int)prefix.n, prefix.s,
                                              (int)p->uri.n, p->uri.s);
                         } else {
-                                // TODO Different error messages
-                                // depending on whether uris are the
-                                // same or not.
                                 // TODO Consider simplifying error messages.
                                 // “prefix has already been bound”
                                 // “previous binding was made here”
@@ -968,20 +965,16 @@ bind_prefix(struct parser *parser, YYLTYPE location, struct string prefix,
 {
         if (string_cmp(prefix, prefix_xml) == 0 &&
             string_cmp(uri, uri_xml) != 0) {
-                // TODO Make these errors static?
-                parser_error(parser, uri_location, "prefix “%.*s” can only be "
-                             "bound to namespace URI “%.*s”",
-                             (int)prefix_xml.n, prefix_xml.s,
-                             (int)uri_xml.n, uri_xml.s);
+                parser_error_s(parser, uri_location, "prefix “xml” can only be "
+                               "bound to namespace URI "
+                               "“http://www.w3.org/XML/1998/namespace”");
                 return false;
         }
         if (string_cmp(uri, uri_xml) == 0 &&
             string_cmp(prefix, prefix_xml) != 0) {
-                // TODO Make these errors static?
-                parser_error(parser, prefix_location, "only prefix “%.*s” can "
-                             "be bound to namespace URI “%.*s”",
-                             (int)prefix_xml.n, prefix_xml.s,
-                             (int)uri_xml.n, uri_xml.s);
+                parser_error_s(parser, prefix_location, "only prefix “xml” can "
+                               "be bound to namespace URI "
+                               "“http://www.w3.org/XML/1998/namespace”");
                 return false;
         }
         return _bind_prefix(parser, &location, prefix, uri,
@@ -993,10 +986,9 @@ bind_default(struct parser *parser, YYLTYPE location, struct string uri,
              const YYLTYPE *uri_location)
 {
         if (string_cmp(uri, uri_xml) == 0) {
-                // TODO Make these errors static?
-                parser_error(parser, uri_location,
-                             "default namespace can’t be set to “%s”",
-                             uri_xml.s);
+                parser_error_s(parser, uri_location,
+                               "default namespace can’t be set to "
+                               "“http://www.w3.org/XML/1998/namespace”");
                 return false;
         }
         if (string_is_inherit(uri) ||
