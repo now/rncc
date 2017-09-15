@@ -17,7 +17,7 @@ io_feed(struct io_out *out, struct io_in *in)
         char b[lengthof(fieldof(struct io_buffered_in, b))];
         ssize_t r, w, n = 0;
         while ((r = io_read(b, lengthof(b), in)) > 0 &&
-               (w = io_write(out, b, (size_t)r)) > 0)
+               (w = io_write(out, b, (size_t)r)) >= 0)
                 n += r;
         if (r < 0)
                 return r;
