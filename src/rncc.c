@@ -26,10 +26,11 @@ static int
 report_error(const struct error *error, const char *path)
 {
         int r;
-        if ((path != NULL && (r = io_print(io_stderr, "%s: ", path)) < 0) ||
-            (error->location.first.line != 0 &&
+        if ((path != NULL && (r = io_print(io_stderr, "%s:", path)) < 0) ||
+            (error->location.first.line != 0 ?
              ((r = location_str(io_stderr, &error->location)) < 0 ||
-              (r = io_print(io_stderr, ": ")) < 0)) ||
+              (r = io_print(io_stderr, ": ")) < 0) :
+             (r = io_print(io_stderr, " ")) < 0) ||
             (r = error_level_str(io_stderr, error->level)) < 0)
                 return r;
         return io_print(io_stderr, ": %s\n", error->message);
