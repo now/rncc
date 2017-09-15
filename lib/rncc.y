@@ -1061,10 +1061,9 @@ bind_datatype_prefix(struct parser *parser, YYLTYPE location,
         }
         if (string_cmp(prefix, prefix_xsd) == 0 &&
             string_cmp(uri, uri_xsd) != 0) {
-                // TODO Make these errors static?
-                parser_error(parser, ls_location, "prefix “%s” can only be "
-                             "bound to namespace URI “%s”", prefix_xsd.s,
-                             uri_xsd.s);
+                parser_error_s(parser, ls_location, "prefix “xsd” can only be "
+                               "bound to namespace URI "
+                               "“http://www.w3.org/2001/XMLSchema-datatypes”");
                 return false;
         }
         struct uri u = URI_INIT;
@@ -1648,10 +1647,9 @@ again:
                 location->last = parser->l;
                 p = q = parser_goto(parser, t, &l);
                 if (!yylex_decode(&c, &escape, &t, &l, parser)) {
-                        // TODO Make these errors static?
-                        parser_error(parser, location,
-                                     "unexpected ‘\\’ ("UC_PRIU") at end of "
-                                     "input", c);
+                        parser_error_s(parser, location,
+                                       "unexpected ‘\\’ (U+005C) at end of "
+                                       "input");
                         return END;
                 }
                 break;
@@ -1833,9 +1831,9 @@ yyerror(YYLTYPE *location, struct parser *parser, const char *message)
                 YYABORT; \
         } \
 } while (0)
-#define F(p, l, ...) do { \
+#define F(p, l, m) do {                         \
         if (!(p)) { \
-                if (!parser_error(parser, &(l), __VA_ARGS__)) { \
+                if (!parser_error_s(parser, &(l), m)) { \
                         YYABORT; \
                 } \
         } \
@@ -1879,8 +1877,7 @@ decl:
 namespace_prefix:
   identifier_or_keyword
     { F(string_cmp($1, prefix_xmlns) != 0, @1,
-        "namespace prefix must not be “%s”", prefix_xmlns.s);
-            // TODO Make these errors static?
+        "namespace prefix must not be “xmlns”");
       $$ = $1; }
 
 datatype_prefix: identifier_or_keyword;
@@ -2281,12 +2278,13 @@ annotation_attribute:
 foreign_attribute_name:
   prefixed_name
     { F(string_cmp($1.uri, uri_xmlns) != 0, @1,
-        "annotation attribute can’t have namespace URI “%s”", uri_xmlns.s);
-                // TODO Make these errors static?
+        "annotation attribute can’t have namespace URI "
+        "“http://www.w3.org/2000/xmlns”");
       F(string_cmp($1.uri, STRING("")) != 0, @1,
         "annotation attribute must have a namespace URI");
       F(string_cmp($1.uri, uri_rng) != 0, @1,
-        "annotation attribute can’t have namespace URI “%s”", uri_rng.s);
+        "annotation attribute can’t have namespace URI "
+        "“http://relaxng.org/ns/structure/1.0”");
       $$ = $1; };
 
 annotation_elements:
@@ -2319,8 +2317,8 @@ foreign_element_name_not_keyword:
     { $$ = name(STRING(""), $1); }
 | prefixed_name
   { F(string_cmp($1.uri, uri_rng) != 0, @1,
-        "annotation element can’t have namespace URI “%s”", uri_rng.s);
-                // TODO Make these errors static?
+        "annotation element can’t have namespace URI "
+        "“http://relaxng.org/ns/structure/1.0”");
       $$ = $1; };
 
 annotation_attributes_content:
@@ -2354,8 +2352,8 @@ any_attribute_name:
     { $$ = name(STRING(""), $1); }
 | prefixed_name
     { F(string_cmp($1.uri, uri_xmlns) != 0, @1,
-        "annotation attribute can’t have namespace URI “%s”", uri_xmlns.s);
-                // TODO Make these errors static?
+        "annotation attribute can’t have namespace URI "
+        "“http://www.w3.org/2000/xmlns”");
       $$ = $1; };
 
 annotation_content:
@@ -2383,7 +2381,6 @@ prefixed_name:
       B(use_prefix(&uri, parser, &$1.prefix_location, $1.prefix));
       F(!string_is_inherit(uri), @1,
         "namespace URI for annotation can’t be inherited");
-                // TODO Make these errors static?
       $$ = name(uri, $1.local); };
 
 documentations:
