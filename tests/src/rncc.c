@@ -655,6 +655,16 @@ static struct test {
           "      <data datatypeLibrary=\"http://www.w3.org/2001/XMLSchema-datatypes\" type=\"anyURI\"/>\n"
           "    </attribute>\n"
           "  </define>\n"),
+        X("Support multiple annotation elements in a sequence",
+          "namespace a = 'b' [a:c[] a:d[]] a = empty",
+          "<grammar xmlns=\"http://relaxng.org/ns/structure/1.0\" "
+          "xmlns:a=\"b\">\n"
+          "  <define name=\"a\">\n"
+          "    <a:c/>\n"
+          "    <a:d/>\n"
+          "    <empty/>\n"
+          "  </define>\n"
+          "</grammar>"),
 #undef STRING
 #undef E
 #undef X
@@ -676,6 +686,8 @@ string_cmp(struct string *a, struct string *b)
 int
 main(UNUSED int argc, char **argv)
 {
+        if (getenv("RNCC_DEBUG"))
+                rncc_debug(true);
         int result = EXIT_SUCCESS, r;
         if ((r = plan(lengthof(tests))) < 0)
                 goto error;

@@ -868,7 +868,7 @@ concat(struct xml left, struct xml right)
                 left.content.last->next = right.content.first;
         return (struct xml){
                 { left.attributes.first, right.attributes.last },
-                { left.content.first, right.content.first }
+                { left.content.first, right.content.last }
         };
 }
 
@@ -1738,6 +1738,9 @@ yyerror(YYLTYPE *location, struct parser *parser, const char *message)
 
 %token
   END 0 "end of file"
+  COMBINE_CHOICE "|="
+  COMBINE_INTERLEAVE "&="
+  FOLLOW_ANNOTATION ">>"
   <keyword> ATTRIBUTE "attribute"
   <keyword> DATATYPES "datatypes"
   <keyword> DEFAULT "default"
@@ -1757,9 +1760,6 @@ yyerror(YYLTYPE *location, struct parser *parser, const char *message)
   <keyword> TSTRING "string"
   <keyword> TEXT "text"
   <keyword> TOKEN "token"
-  COMBINE_CHOICE "|="
-  COMBINE_INTERLEAVE "&="
-  FOLLOW_ANNOTATION ">>"
   <string> DOCUMENTATION "documentation"
   <q_name> C_NAME "CName"
   <q_name> NS_NAME "NsName"
@@ -2726,7 +2726,7 @@ output_xml(struct io_out *out, struct parser *parser)
 
 static int lookup_keyword(YYSTYPE *value, const char *s, size_t n)
 {
-        for (int i = 3; i < 22; i++)
+        for (int i = 6; i < 25; i++)
                 if (yytname[i] != NULL && yytname[i][0] == '"' &&
                     memcmp(yytname[i] + 1, s, n) == 0 &&
                     yytname[i][n + 1] == '"' && yytname[i][n + 2] == '\0') {
