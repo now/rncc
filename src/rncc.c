@@ -42,7 +42,7 @@ main(int argc, char **argv)
         int result = EXIT_SUCCESS, r = 0, in = 0, fd = STDIN_FILENO;
         if (argc > 2 && strcmp(argv[1], "--") == 0)
                 in = 2;
-        if (argc > 1 && strcmp(argv[1], "--version") == 0) {
+        else if (argc > 1 && strcmp(argv[1], "--version") == 0) {
                 if ((r = io_print(io_stdout, "%s\n", PACKAGE_STRING)) < 0) {
                         io_print(io_stderr, "%s: %s\n", argv[0], strerror(-r));
                         result = EXIT_FAILURE;
