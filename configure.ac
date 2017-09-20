@@ -4,7 +4,7 @@ PACKAGE_VERSION_MM=m4_bpatsubst(AC_PACKAGE_VERSION, [^\([0-9][0-9]*\.[0-9][0-9]*
 AC_SUBST([PACKAGE_VERSION_MM])
 AC_CONFIG_AUX_DIR([build])
 AC_CONFIG_MACRO_DIR([build/m4])
-AC_CONFIG_SRCDIR([src/rncc.y])
+AC_CONFIG_SRCDIR([src/rncc.c])
 AC_CONFIG_TESTDIR([tests], [tests])
 AM_INIT_AUTOMAKE([1.15 foreign silent-rules subdir-objects -Wall -Werror])
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
