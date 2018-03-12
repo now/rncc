@@ -102,7 +102,7 @@ tests/rncc: tests/rncc.in
 	$(AM_V_at)chmod a+x $@.tmp
 	$(AM_V_at)mv $@.tmp $@
 
-tests_src_rncc_LDADD = lib/libio.a lib/librncc.a
+tests_src_rncc_LDADD = lib/librncc.a lib/libio.a
 
 TESTSUITE_AT =
 
