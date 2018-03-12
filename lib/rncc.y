@@ -481,8 +481,9 @@ parser_note(struct parser *parser, const YYLTYPE *location, const char *message,
         return r;
 }
 
+#define SSTRING(s) { s, sizeof(s) - 1, true }
 #undef STRING
-#define STRING(s) (struct string){ s, sizeof(s) - 1, true }
+#define STRING(s) (struct string)SSTRING(s)
 
 static const char _inherit[8] = "inherit";
 static const struct string inherit = STRING(_inherit);
@@ -503,11 +504,11 @@ static const struct string uri_xsd =
         STRING("http://www.w3.org/2001/XMLSchema-datatypes");
 
 #define NAME(uri, local) (struct name){ uri, local }
-#define LNAME(local) NAME(STRING(""), STRING(local))
+#define LNAME(local) NAME(SSTRING(""), SSTRING(local))
 
 static const struct name name_documentation =
-        NAME(STRING("http://relaxng.org/ns/compatibility/annotations/1.0"),
-             STRING("documentation"));
+        NAME(SSTRING("http://relaxng.org/ns/compatibility/annotations/1.0"),
+             SSTRING("documentation"));
 
 static bool
 string_is_inherit(struct string s)
@@ -1182,7 +1183,8 @@ rng_element_with_attribute(const struct parser *parser,
                            struct attributes attributes,
                            struct content content)
 {
-        struct attribute *a = attribute(parser, NAME(STRING(""), attribute_name),
+        struct attribute *a = attribute(parser,
+                                        NAME(SSTRING(""), attribute_name),
                                         value);
         if (a == NULL)
                 return NULL;
@@ -2070,12 +2072,18 @@ lead_annotated_data_except:
 lead_annotated_primary:
   annotations primary { $$ = element_to_elements(apply_annotations($1, $2)); };
 | annotations '(' inner_pattern ')'
-    { L($$ = name_cmp($3.first->name, NAME(uri_rng, STRING("zeroOrMore"))) == 0 ||
-             name_cmp($3.first->name, NAME(uri_rng, STRING("oneOrMore"))) == 0 ||
-             name_cmp($3.first->name, NAME(uri_rng, STRING("optional"))) == 0 ||
-             name_cmp($3.first->name, NAME(uri_rng, STRING("choice"))) == 0 ||
-             name_cmp($3.first->name, NAME(uri_rng, STRING("group"))) == 0 ||
-             name_cmp($3.first->name, NAME(uri_rng, STRING("interleave"))) == 0 ?
+    { L($$ = name_cmp($3.first->name, NAME(uri_rng,
+                                           SSTRING("zeroOrMore"))) == 0 ||
+             name_cmp($3.first->name, NAME(uri_rng,
+                                           SSTRING("oneOrMore"))) == 0 ||
+             name_cmp($3.first->name, NAME(uri_rng,
+                                           SSTRING("optional"))) == 0 ||
+             name_cmp($3.first->name, NAME(uri_rng,
+                                           SSTRING("choice"))) == 0 ||
+             name_cmp($3.first->name, NAME(uri_rng,
+                                           SSTRING("group"))) == 0 ||
+             name_cmp($3.first->name, NAME(uri_rng,
+                                           SSTRING("interleave"))) == 0 ?
                       element_to_elements(apply_annotations($1, $3.first)) :
                       apply_annotations_group(parser, $1, $3)); };
 
@@ -2197,7 +2205,7 @@ lead_annotated_simple_element_name_class:
   annotations simple_element_name_class
     { $$ = element_to_elements(apply_annotations($1, $2)); }
 | annotations '(' element_name_class ')'
-    { L($$ = name_cmp($3.first->name, NAME(uri_rng, STRING("choice"))) == 0 ?
+    { L($$ = name_cmp($3.first->name, NAME(uri_rng, SSTRING("choice"))) == 0 ?
                       element_to_elements(apply_annotations($1, $3.first)) :
                       apply_annotations_choice(parser, $1, $3)); };
 
@@ -2205,7 +2213,7 @@ lead_annotated_simple_attribute_name_class:
   annotations simple_attribute_name_class
     { $$ = element_to_elements(apply_annotations($1, $2)); }
 | annotations '(' attribute_name_class ')'
-    { L($$ = name_cmp($3.first->name, NAME(uri_rng, STRING("choice"))) == 0 ?
+    { L($$ = name_cmp($3.first->name, NAME(uri_rng, SSTRING("choice"))) == 0 ?
                       element_to_elements(apply_annotations($1, $3.first)) :
                       apply_annotations_choice(parser, $1, $3)); };
 
