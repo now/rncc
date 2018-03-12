@@ -72,6 +72,8 @@ lib_librncc_a_SOURCES = \
 	lib/rncc.y \
 	lib/uri.c
 
+lib_librncc_LDADD = lib/libio.a
+
 src_rncc_LDADD = lib/libio.a lib/librncc.a
 
 check_PROGRAMS = \
