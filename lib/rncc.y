@@ -514,7 +514,8 @@ static const struct name name_documentation = {
 static bool
 string_is_inherit(struct string s)
 {
-        return memcmp(&s, &inherit, sizeof(s)) == 0;
+        return s.s == inherit.s && s.n == inherit.n &&
+                s.shared == inherit.shared;
 }
 
 static int
