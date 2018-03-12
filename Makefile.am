@@ -72,7 +72,7 @@ lib_librncc_a_SOURCES = \
 	lib/rncc.y \
 	lib/uri.c
 
-lib_librncc_a_LDADD = lib/libio.a
+lib_librncc_a_LIBADD = lib/libio.a
 
 src_rncc_LDADD = lib/libio.a lib/librncc.a
 
