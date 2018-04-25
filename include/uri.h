@@ -17,5 +17,5 @@ struct uri {
 
 int uri_parse(struct uri *uri, struct errors *errors, const char **s_end,
               const char *s, size_t n);
-int uri_string_cmp(const struct uri_string *a, const struct uri_string *b);
-int uri_cmp(const struct uri *a, const struct uri *b);
+PURE int uri_string_cmp(const struct uri_string *a, const struct uri_string *b);
+PURE int uri_cmp(const struct uri *a, const struct uri *b);

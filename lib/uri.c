@@ -109,10 +109,10 @@ uri_parse_ipv6(const char **r, struct errors *errors, const char *s,
                const char *end)
 {
         size_t n = errors->n;
-        const char *q = s, *t, *cq;
+        const char *q = s, *t, *cq = q;
         int i, ci = -1, dn = 0, hn = 0;
         if (q[0] == ':') {
-                cq = q;
+                cq = q, ci = 0, i = 1;
                 if (q + 1 < end && q[1] == ':')
                         q += 2;
                 else {
@@ -122,8 +122,6 @@ uri_parse_ipv6(const char **r, struct errors *errors, const char *s,
                                     "address; treating it as “::”");
                         q++;
                 }
-                ci = 0;
-                i = 1;
         } else
                 i = 0;
         for (; q < end && i < 8; q++) {

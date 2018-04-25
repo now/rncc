@@ -38,7 +38,8 @@ struct errors {
         (struct error[m]){ { .message_is_static = true } }, 0, (m), (malloc) \
 }
 
-struct errors errors_init(struct error *s, size_t m, void *(*malloc)(size_t n));
+CONST struct errors errors_init(struct error *s, size_t m,
+                                void *(*malloc)(size_t n));
 int errors_add(struct errors *errors, const struct location *l,
                enum error_level v, const char *message, ...) PRINTF(4, 5);
 void errors_adds(struct errors *errors, const struct location *l,

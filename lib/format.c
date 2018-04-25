@@ -33,7 +33,7 @@ formatv(char **output, void *(*malloc)(size_t), const char *format, va_list args
                 va_end(saved);
                 return -errno;
         }
-        require(vsnprintf(result, r + 1, format, saved) >= 0);
+        require(vsnprintf(result, (size_t)r + 1, format, saved) >= 0);
         va_end(saved);
         *output = result;
         return r;

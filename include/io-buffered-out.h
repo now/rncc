@@ -13,4 +13,4 @@ extern const struct io_out_fns io_buffered_out_fns;
         .n = 0, \
 }
 
-struct io_buffered_out io_buffered_out_init(struct io_out *next);
+CONST struct io_buffered_out io_buffered_out_init(struct io_out *next);

@@ -12,5 +12,6 @@ extern const struct io_out_fns io_dynamic_out_fns;
         { &io_dynamic_out_fns }, (realloc), NULL, 0, 0 \
 }
 
-struct io_dynamic_out io_dynamic_out_init(void *(*realloc)(void *s, size_t n));
+CONST struct io_dynamic_out io_dynamic_out_init(void *(*realloc)(void *s,
+                                                                 size_t n));
 int io_dynamic_out_expand(struct io_dynamic_out *o, size_t n);

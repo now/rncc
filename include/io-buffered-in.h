@@ -14,4 +14,4 @@ extern const struct io_in_fns io_buffered_in_fns;
         .n = 0, \
 }
 
-struct io_buffered_in io_buffered_in_init(struct io_in *next);
+CONST struct io_buffered_in io_buffered_in_init(struct io_in *next);

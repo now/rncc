@@ -86,7 +86,7 @@ static inline unsigned char
 decode(unsigned char *restrict state, uc *restrict c, unsigned char b)
 {
         unsigned char type = dfa[b];
-        *c = *state != ACCEPT ? (*c << 6) | (b & 0x3f) : (0xff >> type) & b;
+        *c = *state != ACCEPT ? (*c << 6) | (b & 0x3f) : (0xffU >> type) & b;
         return *state = dfa[256 + *state + type];
 }
 
@@ -482,7 +482,7 @@ parser_note(struct parser *parser, const YYLTYPE *location, const char *message,
 }
 
 #undef STRING
-#define STRING(s) (struct string){ s, sizeof(s) - 1, true }
+#define STRING(s) { s, sizeof(s) - 1, true }
 
 static const char _inherit[8] = "inherit";
 static const struct string inherit = STRING(_inherit);
@@ -502,14 +502,15 @@ static const struct string prefix_xsd = STRING("xsd");
 static const struct string uri_xsd =
         STRING("http://www.w3.org/2001/XMLSchema-datatypes");
 
-#define NAME(uri, local) (struct name){ uri, local }
-#define LNAME(local) NAME(STRING(""), STRING(local))
-
-// We can’t use NAME here, as GCC won’t accept it.
 static const struct name name_documentation = {
         STRING("http://relaxng.org/ns/compatibility/annotations/1.0"),
         STRING("documentation")
 };
+
+#undef STRING
+#define STRING(s) (struct string){ s, sizeof(s) - 1, true }
+#define NAME(uri, local) (struct name){ uri, local }
+#define LNAME(local) NAME(STRING(""), STRING(local))
 
 static bool
 string_is_inherit(struct string s)
@@ -614,7 +615,7 @@ attribute(const struct parser *parser, struct name name, struct string value)
         return foreign_attribute(parser, LOCATION_NULL, name, value);
 }
 
-static struct attributes
+PURE static struct attributes
 attribute_to_attributes(struct attribute *attribute)
 {
         assert(attribute == NULL || attribute->next == NULL);
@@ -754,7 +755,7 @@ element_to_elements(struct element *element)
         return (struct elements){ element, element };
 }
 
-static struct xml
+PURE static struct xml
 element_to_xml(struct element *element)
 {
         if (element == NULL)
@@ -1860,6 +1861,7 @@ yyerror(YYLTYPE *location, struct parser *parser, const char *message)
 #ifdef HAVE_WCONVERSION
 #  pragma GCC diagnostic push
 #  pragma GCC diagnostic ignored "-Wconversion"
+#  pragma GCC diagnostic ignored "-Wsign-conversion"
 #endif
 }
 
@@ -2720,11 +2722,12 @@ output_xml(struct io_out *out, struct parser *parser)
                 out,
         };
         int r;
-        (r = OUTS(&closure,
-                  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")) < 0 ||
-                (r = child_traverse(&parser->top_level->self, xml_enter,
-                                    xml_leave, &closure)) < 0 ||
-                (r = OUTS(&closure, "\n"));
+        if ((r = OUTS(&closure,
+                      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")) < 0 ||
+            (r = child_traverse(&parser->top_level->self, xml_enter,
+                                xml_leave, &closure)) < 0 ||
+            (r = OUTS(&closure, "\n"))) {
+        }
         bool_recstack_free(&closure.indent);
         return r;
 }

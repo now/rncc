@@ -13,13 +13,6 @@
 #  define UNLIKELY(expr) (expr)
 #endif
 
-#if defined __GNUC__ && defined __GNUC_MINOR__
-#  define GNUC_GEQ(major, minor) \
-        ((__GNUC__ << 16) + __GNUC_MINOR__ >= ((major) << 16) + (minor))
-#else
-#  define GNUC_GEQ(major, minor) 0
-#endif
-
 #if GNUC_GEQ(2, 3)
 #  define PRINTF(format_index, first_argument_index) \
         __attribute__((format(printf, format_index, first_argument_index)))
@@ -27,6 +20,18 @@
 #else
 #  define PRINTF(format_index, first_argument_index) /* PRINTF */
 #  define UNUSED /* UNUSED */
+#endif
+
+#if GNUC_GEQ(2, 5)
+#  define CONST __attribute__((__const__))
+#else
+#  define CONST /* CONST */
+#endif
+
+#if GNUC_GEQ(2, 97)
+#  define PURE __attribute__((__pure__))
+#else
+#  define PURE /* PURE */
 #endif
 
 #define lengthof(a) (sizeof(a) / sizeof((a)[0]))
