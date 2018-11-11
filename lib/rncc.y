@@ -134,7 +134,9 @@ uc_encode(char *u, size_t n, uc c)
         if (n >= m)
                 switch (m) {
                 case 4: u[3] = (char)(0x80 | (c & 0x3f)); c >>= 6; c |= 0x10000;
+                        FALLTHROUGH;
                 case 3: u[2] = (char)(0x80 | (c & 0x3f)); c >>= 6; c |= 0x800;
+                        FALLTHROUGH;
                 case 2: u[1] = (char)(0x80 | (c & 0x3f)); c >>= 6; c |= 0xc0;
                         u[0] = (char)c;
                 }
@@ -1373,6 +1375,7 @@ yylex_decode(uc *c, bool *escape, const char **q, struct point *l,
                                 *escape = true;
                                 (*q)++;
                         }
+                        FALLTHROUGH;
                 case '\n':
                         return *c = '\0', l->line++, l->column = 1, true;
                 case '\\':
@@ -1428,6 +1431,7 @@ yylex_decode(uc *c, bool *escape, const char **q, struct point *l,
                                 parser_goto(parser, *q, l);
                                 break;
                         }
+                        FALLTHROUGH;
                 default:
                 validate:
                         if (!xml_is_char(d)) {

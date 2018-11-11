@@ -34,6 +34,12 @@
 #  define PURE /* PURE */
 #endif
 
+#if GNUC_GEQ(7)
+#  define FALLTHROUGH __attribute__((__fallthrough__))
+#else
+#  define FALLTHROUGH /* FALLTHROUGH */((void)0)
+#endif
+
 #define lengthof(a) (sizeof(a) / sizeof((a)[0]))
 #define fieldof(type, field) (((type *)0)->field)
 
