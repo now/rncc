@@ -34,7 +34,7 @@
 #  define PURE /* PURE */
 #endif
 
-#if GNUC_GEQ(7)
+#if GNUC_GEQ(7, 0)
 #  define FALLTHROUGH __attribute__((__fallthrough__))
 #else
 #  define FALLTHROUGH /* FALLTHROUGH */((void)0)
