@@ -41,6 +41,27 @@ distclean-local: clean-gtags
 
 bin_PROGRAMS = src/rncc
 
+noinst_HEADERS = \
+	include/def.h \
+	include/error.h \
+	include/format.h \
+	include/io-assert.h \
+	include/io-buffered-in.h \
+	include/io-buffered-out.h \
+	include/io-dynamic-out.h \
+	include/io-fd-in.h \
+	include/io-fd-out.h \
+	include/io-in.h \
+	include/io-out.h \
+	include/io-static-out.h \
+	include/io-std.h \
+	include/io-stynamic-out.h \
+	include/location.h \
+	include/recstack.h \
+	include/rncc.h \
+	include/uri.h \
+	tests/tap.h
+
 lib_LIBRARIES = \
 	lib/libio.a \
 	lib/librncc.a
@@ -109,11 +130,17 @@ TESTSUITE_AT =
 TESTSUITE = tests/testsuite
 
 EXTRA_DIST = \
-	     tests/atlocal.in \
-	     tests/package.m4 \
-	     tests/testsuite.at \
-	     $(TESTSUITE_AT) \
-	     $(TESTSUITE)
+	build/tap-driver.sh \
+	tests/atlocal.in \
+	tests/package.m4 \
+	tests/rncc.in \
+	tests/testsuite.at \
+	$(TESTSUITE_AT) \
+	$(TESTSUITE)
+
+CLEANFILES = \
+	tests/atconfig \
+	tests/rncc
 
 RUN_TESTSUITE = $(SHELL) $(TESTSUITE) -C tests $(TESTSUITEFLAGS)
 
