@@ -22,6 +22,7 @@
 /build/missing
 /config.h
 /config.h.in
+/config.h.in~
 /config.status
 /configure
 /gtags.files
