@@ -31,7 +31,7 @@
 struct element;
 struct parser;
 
-#define YYLTYPE struct location
+#define _RNCC_LTYPE struct location
 
 #define YYLLOC_DEFAULT(C, R, N) do { \
         if (N) { \
@@ -1736,10 +1736,10 @@ yyerror(YYLTYPE *location, struct parser *parser, const char *message)
 }
 }
 
+%define api.prefix {_rncc_}
 %define api.pure full
 %parse-param {struct parser *parser}
 %lex-param {struct parser *parser}
-%name-prefix "_rncc_"
 %token-table
 %debug
 %define parse.error verbose
@@ -1862,10 +1862,15 @@ yyerror(YYLTYPE *location, struct parser *parser, const char *message)
 #define L(p) M((p).last)
 #define S(p) M((p).s)
 
-#ifdef HAVE_WCONVERSION
+#if defined HAVE_WCONVERSION || defined HAVE_WMISSINGBRACES
 #  pragma GCC diagnostic push
+#if defined HAVE_WCONVERSION
 #  pragma GCC diagnostic ignored "-Wconversion"
 #  pragma GCC diagnostic ignored "-Wsign-conversion"
+#endif
+#if defined HAVE_WMISSINGBRACES
+#  pragma GCC diagnostic ignored "-Wmissing-braces"
+#endif
 #endif
 }
 
@@ -2443,7 +2448,7 @@ documentation: DOCUMENTATION { S($1); L($$ = text(parser, $1)); }
 
 %%
 
-#ifdef HAVE_WCONVERSION
+#if defined HAVE_WCONVERSION || defined HAVE_WMISSINGBRACES
 #  pragma GCC diagnostic pop
 #endif
 

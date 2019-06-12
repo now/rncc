@@ -11,9 +11,10 @@ AM_CFLAGS = \
 	$(WARN_CFLAGS) \
 	$(WERROR_CFLAGS) \
 	$(WCONVERSION_CFLAGS) \
+	$(WMISSINGBRACES_CFLAGS) \
 	$(WSUGGESTATTRIBUTEPURE_CFLAGS)
 
-AM_YFLAGS = --warnings=all,error --report=all
+AM_YFLAGS = --warnings=all,no-yacc,error --report=all
 
 .PHONY: gtags
 gtags: $(srcdir)/GRTAGS

@@ -38,6 +38,7 @@ if test "${enableval}" = yes; then
   gl_WARN_ADD([-Wimplicitly-unsigned-literal])
   gl_WARN_ADD([-Winit-self])
   gl_WARN_ADD([-Winline])
+  gl_WARN_ADD([-Wmissing-braces], [WMISSINGBRACES_CFLAGS])
   gl_WARN_ADD([-Wmissing-declarations])
   gl_WARN_ADD([-Wmissing-format-attribute])
   gl_WARN_ADD([-Wmissing-include-dirs])
@@ -63,6 +64,10 @@ if test "${enableval}" = yes; then
   if test -n "$WCONVERSION_CFLAGS"; then
     AC_DEFINE([HAVE_WCONVERSION], [1],
               [Define to 1 if compiler supports -Wconversion.])
+  fi
+  if test -n "$WMISSINGBRACES_CFLAGS"; then
+    AC_DEFINE([HAVE_WMISSINGBRACES], [1],
+              [Define to 1 if compiler supports -Wmissing-braces.])
   fi
   if test -n "$WSUGGESTATTRIBUTEPURE_CFLAGS"; then
     AC_DEFINE([HAVE_WSUGGESTATTRIBUTE_PURE], [1],
