@@ -212,11 +212,11 @@ main(UNUSED int argc, char **argv)
                 }
                 bool same;
                 if ((r = ok(tests[i].error.s == NULL ?
-                            rs >= 0 && errors.n == 0 &&
-                            (same = uri_cmp(&uri, &tests[i].expected) == 0) :
-                            rs < 0 &&
+                            (same = uri_cmp(&uri, &tests[i].expected) == 0) &&
+                            rs >= 0 && errors.n == 0 :
                             (same = error_string_cmp(&errors,
-                                                     &tests[i].error) == 0),
+                                                     &tests[i].error) == 0) &&
+                            rs < 0,
                             tests[i].description)) < 0)
                         goto error;
                 else if (!r && tests[i].error.s == NULL) {
