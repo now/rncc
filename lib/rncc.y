@@ -1864,13 +1864,13 @@ yyerror(YYLTYPE *location, struct parser *parser, const char *message)
 
 #if defined HAVE_WCONVERSION || defined HAVE_WMISSINGBRACES
 #  pragma GCC diagnostic push
-#if defined HAVE_WCONVERSION
-#  pragma GCC diagnostic ignored "-Wconversion"
-#  pragma GCC diagnostic ignored "-Wsign-conversion"
-#endif
-#if defined HAVE_WMISSINGBRACES
-#  pragma GCC diagnostic ignored "-Wmissing-braces"
-#endif
+#  if defined HAVE_WCONVERSION
+#    pragma GCC diagnostic ignored "-Wconversion"
+#    pragma GCC diagnostic ignored "-Wsign-conversion"
+#  endif
+#  if defined HAVE_WMISSINGBRACES
+#    pragma GCC diagnostic ignored "-Wmissing-braces"
+#  endif
 #endif
 }
 
